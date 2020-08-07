@@ -1,16 +1,16 @@
 require('dotenv').config()
-var morgan = require('morgan')
-var express = require('express')
-var exphbs = require('express-handlebars')
+const morgan = require('morgan')
+const express = require('express')
+const exphbs = require('express-handlebars')
 // Requiring passport as we've configured it
-// var passport = require('./config/passport')
-// var session = require("express-session");
-var session = require('cookie-session')
-var db = require('./models')
-var passport = require('./config/passport.js')
+// const passport = require('./config/passport')
+// const session = require("express-session");
+const session = require('cookie-session')
+const db = require('./models')
+const passport = require('./config/passport.js')
 
-var app = express()
-var PORT = process.env.PORT || 3000
+const app = express()
+const PORT = process.env.PORT || 3000
 
 // Middleware
 app.use(morgan('dev'))

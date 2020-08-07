@@ -5,9 +5,15 @@ const axios = require('axios')
 const request = require('request')
 const geoip = require('geoip-lite')
 const multer = require('multer')
+
 const subscriptionKey = process.env.KEY
 const endpoint = process.env.ENDPOINT
 if (!subscriptionKey) { throw new Error() }
+
+const ENV = process.env.NODE_ENV || 'development'
+console.log('ENV!!!!!!!!!!!!')
+console.log(ENV)
+
 const medianIncome = require('../medianIncome.js')
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -31,6 +37,7 @@ module.exports = function (app) {
     const culture = !!req.body['culture-pref']
     const ip = req.headers['x-forwarded-for'] || req.ip
     const langSetting = req.headers['accept-language']
+    const geo = ENV === 'production' ? geoip.lookup(ip) : geoip.lookup('207.97.227.239')
 
     const userProfile = {
       name: name,
@@ -59,13 +66,17 @@ module.exports = function (app) {
         medianIncome: 0
       },
       wealth: 0,
-      // geo: geoip.lookup('207.97.227.239') // this.ip
-      geo: geoip.lookup(ip)
+      // geo: geoip.lookup('207.97.227.239') // for development env
+      // geo: geoip.lookup(ip) // for production env
+      geo: geo
     }
 
     userProfile.images = userProfile.images.map((item) => {
       return protocol + '://' + host + '/userImages/' + item.filename
     })
+
+    console.log('userProfile1')
+    console.log(userProfile)
 
     for (var i = 0; i < medianIncome.length; i++) {
       if (userProfile.geo.region === medianIncome[i].location) {
@@ -103,11 +114,11 @@ module.exports = function (app) {
         axios.get(`https://api.genderize.io?name=${userProfile.name}&country_id=${userProfile.geo.country}`).then((data) => {
           userProfile.gender = data.data.gender
 
-          var fakeArray = ['https://images.pexels.com/photos/417173/pexels-photo-417173.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940', 'https://images.pexels.com/photos/4827/nature-forest-trees-fog.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260', 'https://images.pexels.com/photos/417173/pexels-photo-417173.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260']
+          const fakeArray = ['https://images.pexels.com/photos/417173/pexels-photo-417173.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940', 'https://images.pexels.com/photos/4827/nature-forest-trees-fog.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260', 'https://images.pexels.com/photos/417173/pexels-photo-417173.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260']
 
-          var uriBase = endpoint + 'vision/v3.0/analyze'
+          const uriBase = endpoint + 'vision/v3.0/analyze'
 
-          var count = 0
+          let count = 0
 
           function getCategories () {
             request({
@@ -118,8 +129,9 @@ module.exports = function (app) {
                 'ocp-apim-subscription-key': subscriptionKey
               },
               body: {
-                url: userProfile.images[count]
-                // url: fakeArray[count]
+                // url: userProfile.images[count] // for production env
+                // url: fakeArray[count] // for development env
+                url: ENV === 'production' ? userProfile.images[count] : fakeArray[count]
               },
               json: true
             }, function (error, response, body) {
