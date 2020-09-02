@@ -129,13 +129,18 @@ module.exports = function (app) {
                 'ocp-apim-subscription-key': subscriptionKey
               },
               body: {
-                // url: userProfile.images[count] // for production env
+                url: userProfile.images[count] // for production env
                 // url: fakeArray[count] // for development env
-                url: ENV === 'production' ? userProfile.images[count] : fakeArray[count]
+                // url: ENV === 'production' ? userProfile.images[count] : fakeArray[count]
               },
               json: true
             }, function (error, response, body) {
               if (error) throw new Error(error)
+
+              console.log('userProfile.images[count]')
+              console.log(userProfile.images[count])
+              console.log('body!!!')
+              console.log(body)
 
               if (body.categories[0].name.split('_')[0] === 'outdoor') {
                 userProfile.interests_details[body.categories[0].name] += 0.34
